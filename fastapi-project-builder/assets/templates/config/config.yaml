@@ -1,0 +1,37 @@
+app:
+  name: "__PROJECT_DISPLAY_NAME__"
+  version: "0.1.0"
+  debug: false
+  host: "127.0.0.1"
+  port: 8000
+  api_prefix: "/api/v1"
+
+# 数据库配置
+database:
+  host: "127.0.0.1"
+  port: 5432
+  user: "__PROJECT_SLUG_UNDERSCORE__"
+  password: ""
+  database: "__PROJECT_SLUG_UNDERSCORE__"
+  pool_size: 20
+  max_overflow: 10
+  pool_timeout: 30
+  pool_recycle: 3600
+  echo: false
+
+# Redis 配置
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: ""
+  max_connections: 50
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  broker_db: 7
+  backend_url_db: 8
+
+# 日志文件路径
+log:
+  console: true
+  path: logs

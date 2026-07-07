@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'if [ -x .venv/bin/python ]; then PY=.venv/bin/python; elif [ -x venv/bin/python ]; then PY=venv/bin/python; elif [ -x env/bin/python ]; then PY=env/bin/python; else PY=/Users/tansir/.venv/bin/python; fi; \"$PY\" scripts/hooks/apifox_sync_guard.py'"
+          }
+        ]
+      }
+    ]
+  }
+}

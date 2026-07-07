@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "apifox": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "apifox-openapi-mcp@latest",
+        "--token",
+        "__APIFOX_TOKEN__",
+        "--project-id",
+        "__APIFOX_PROJECT_ID__"
+      ]
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "easy-pg-mcp@latest"
+      ],
+      "env": {
+        "PG_HOST": "__PG_HOST__",
+        "PG_PORT": "__PG_PORT__",
+        "PG_USER": "__PG_USER__",
+        "PG_PASSWORD": "__PG_PASSWORD__",
+        "PG_DATABASE": "__PG_DATABASE__",
+        "PG_MCP_MODE": "__PG_MCP_MODE__"
+      }
+    }
+  }
+}
