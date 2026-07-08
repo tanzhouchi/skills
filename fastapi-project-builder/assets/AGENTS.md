@@ -9,7 +9,7 @@
 1. **全中文输出**：回复正文、文档说明、代码注释和交接说明必须使用简体中文。专有名词、文件名、路径、代码关键字、命令、配置字段除外。
 2. **静默自主执行**：读取文件、搜索目录、检查环境、查看状态时直接执行，禁止反复询问是否继续。
 3. **数字书写规则**：版本号、数量、容量、时长、端口、并发数、进程数、连接数、行数、日期、时间、百分比等可量化信息必须使用阿拉伯数字。
-4. **Python 环境**：执行任何 Python 命令前，先检测当前目录是否存在 `.venv`、`venv`、`env`。若不存在，停止执行 Python 命令并提示先创建项目本地虚拟环境，禁止使用个人机器上的固定解释器路径作为兜底。
+4. **Python 环境**：执行任何 Python 命令前，先检测当前目录是否存在 `.venv`、`venv`、`env`。若不存在，停止执行 Python 命令并提示先创建项目本地虚拟环境。禁止写入个人机器上的固定解释器路径。
 5. **保护用户改动**：不得回滚、覆盖或删除自己未创建的改动。遇到无关脏文件时忽略；遇到相关脏文件时先读懂再增量修改。
 
 ---
@@ -72,14 +72,14 @@ api -> service -> repository -> model
 6. 禁止硬编码密钥、密码、令牌和私有地址。
 7. SQL 操作必须使用 ORM 或参数化查询，禁止字符串拼接 SQL。
 8. 禁止提交调试代码、临时注释或无关格式化变更。
-9. `app/main.py`、`app/core/logger.py`、`app/core/response.py`、`app/core/exceptions.py`、`app/core/exception_handlers.py` 和 `app/common/datetime.py` 必须沿用项目初始模板，禁止随意重写公共入口、日志、异常和响应格式。
+9. `app/main.py`、`app/lifespan.py`、`app/api/v1/health_api.py`、`app/api/v1/router.py`、`app/core/config.py`、`app/core/database.py`、`app/core/middleware.py`、`app/core/logger.py`、`app/core/response.py`、`app/core/exceptions.py`、`app/core/exception_handlers.py`、`app/common/datetime.py`、`app/model/base.py`、`migrations/env.py`、`tests/conftest.py`、`tests/integration/test_health.py` 和 `pyproject.toml` 必须沿用项目初始模板，禁止随意重写公共入口和基础设施。
 10. 所有 ORM 模型字段必须有中文字段说明，`Column` 或 `mapped_column` 必须设置 `comment`。
 
 ---
 
 ## 4. API 与响应规则
 
-1. API 默认使用 `app.core.response` 的辅助函数构建统一响应。
+1. API 默认使用 `app.core.response` 的辅助函数构建统一响应；`GET /health` 是唯一例外，固定裸返回 `{"status": "ok"}`，不使用统一响应包装。
 2. 路由文件只做请求解析、依赖注入和响应封装，禁止写业务逻辑。
 3. 新增路由应提供清晰的 `summary`。
 4. 请求和响应模型集中放在 `app/schema`。
@@ -103,12 +103,13 @@ api -> service -> repository -> model
 ## 5. 配置、日志与数据库
 
 1. 配置加载顺序为 `config/config-local.yaml` 优先，回退到 `config/config.yaml`。
-2. 本地敏感配置写入 `config-local.yaml`，禁止提交真实凭据。
-3. 应用代码通过统一日志模块获取日志实例。
-4. HTTP 请求追踪默认使用请求编号中间件。
-5. 需要数据库时使用 `SQLAlchemy 2.0` 和 `Alembic`。
-6. 修改 ORM 模型后，必须同步迁移文件并执行迁移验证。
-7. 日志模块必须保留正常日志与错误日志双文件分离、按日期切割、`init_log()` 幂等初始化和 `get_business_logger()` 统一入口。
+2. 实际加载顺序为 `config/config.yaml`、`config/config-local.yaml`、`DATABASE_URL`、`DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME`，右侧覆盖左侧。
+3. 本地敏感配置写入 `config-local.yaml`，禁止提交真实凭据。
+4. 应用代码通过统一日志模块获取日志实例。
+5. HTTP 请求追踪默认使用纯 `ASGI` 请求编号中间件，禁止改写为 `BaseHTTPMiddleware`。
+6. 需要数据库时使用 `SQLAlchemy 2.0` 和 `Alembic`。
+7. 修改 ORM 模型后，必须同步迁移文件并执行迁移验证。
+8. 日志模块必须保留正常日志与错误日志双文件分离、按日期切割、`init_log()` 幂等初始化和 `get_business_logger()` 统一入口。
 
 ---
 

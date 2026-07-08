@@ -1,7 +1,6 @@
 """日期时间工具函数。"""
 
-from datetime import datetime, timezone
-
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 # 项目默认时区：北京时间 (UTC+8)
@@ -10,7 +9,7 @@ _DEFAULT_TZ = ZoneInfo("Asia/Shanghai")
 
 def utcnow() -> datetime:
     """返回当前 UTC 时间（timezone-aware）。"""
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
 def local_now() -> datetime:
@@ -26,7 +25,7 @@ def local_now_str() -> str:
 def format_response_datetime(value: datetime) -> str:
     """将接口响应中的时间统一转换为北京时间字符串。"""
     if value.tzinfo is None or value.utcoffset() is None:
-        value = value.replace(tzinfo=timezone.utc)
+        value = value.replace(tzinfo=UTC)
     return value.astimezone(_DEFAULT_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
 

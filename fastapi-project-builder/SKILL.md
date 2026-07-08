@@ -47,7 +47,7 @@ pwd
 find . -maxdepth 2 -type d \( -name ".venv" -o -name "venv" -o -name "env" \)
 ```
 
-如果当前目录有 `.venv`、`venv` 或 `env`，后续 `Python` 命令优先使用其中的解释器。若不存在，停止执行 `Python` 命令并提示先创建项目本地虚拟环境，禁止使用个人机器上的固定解释器路径作为兜底。
+如果当前目录有 `.venv`、`venv` 或 `env`，后续 `Python` 命令优先使用其中的解释器。若不存在，停止执行 `Python` 命令并提示先创建项目本地虚拟环境。技能模板禁止写入任何个人机器上的固定解释器路径。
 
 解释器解析顺序：
 
@@ -153,6 +153,35 @@ scripts/hooks/apifox_sync_guard.py
 scripts/hooks/README.md
 ```
 
+## 固定模板文件集合
+
+下列文件必须从本技能模板生成，禁止按描述自由仿写。除表格列出的占位符外，目标文件内容应逐字一致。
+
+| 模板 | 目标文件 | 允许替换 |
+| --- | --- | --- |
+| `assets/templates/app/main.py` | `app/main.py` | `__PROJECT_DESCRIPTION__` |
+| `assets/templates/app/lifespan.py` | `app/lifespan.py` | 无 |
+| `assets/templates/app/api/v1/health_api.py` | `app/api/v1/health_api.py` | 无 |
+| `assets/templates/app/api/v1/router.py` | `app/api/v1/router.py` | 无 |
+| `assets/templates/app/core/config.py` | `app/core/config.py` | `__PROJECT_DISPLAY_NAME__`、`__PROJECT_SLUG_UNDERSCORE__` |
+| `assets/templates/app/core/database.py` | `app/core/database.py` | 无 |
+| `assets/templates/app/core/middleware.py` | `app/core/middleware.py` | 无 |
+| `assets/templates/app/core/logger.py` | `app/core/logger.py` | `__PROJECT_SLUG__` |
+| `assets/templates/app/core/response.py` | `app/core/response.py` | 无 |
+| `assets/templates/app/core/exceptions.py` | `app/core/exceptions.py` | 无 |
+| `assets/templates/app/core/exception_handlers.py` | `app/core/exception_handlers.py` | 无 |
+| `assets/templates/app/common/datetime.py` | `app/common/datetime.py` | 无 |
+| `assets/templates/app/model/base.py` | `app/model/base.py` | 无 |
+| `assets/templates/app/integration/__init__.py` | `app/integration/__init__.py` | 无 |
+| `assets/templates/app/integration/README.md` | `app/integration/README.md` | 无 |
+| `assets/templates/config/config.yaml` | `config/config.yaml` | `__PROJECT_DISPLAY_NAME__`、`__PROJECT_SLUG_UNDERSCORE__` |
+| `assets/templates/config/config-local.yaml` | `config/config-local.yaml` | `__PROJECT_DISPLAY_NAME__`、`__PROJECT_SLUG_UNDERSCORE__` |
+| `assets/templates/docs/README.md` | `docs/README.md` | 无 |
+| `assets/templates/migrations/env.py` | `migrations/env.py` | 无 |
+| `assets/templates/tests/conftest.py` | `tests/conftest.py` | 无 |
+| `assets/templates/tests/integration/test_health.py` | `tests/integration/test_health.py` | 无 |
+| `assets/templates/pyproject.toml` | `pyproject.toml` | `__PROJECT_SLUG__`、`__PROJECT_DISPLAY_NAME__` |
+
 ## 分层规则
 
 按以下依赖方向组织代码：
@@ -194,9 +223,18 @@ dependencies = [
 dev = [
   "pytest>=8.2.0",
   "pytest-asyncio>=0.23.0",
+  "httpx>=0.27.0",
   "ruff>=0.5.0",
   "mypy>=1.10.0",
   "types-PyYAML>=6.0",
+]
+```
+
+`pyproject.toml` 必须来自固定模板，包含 `packages.find`、`pytest`、`ruff`、`mypy` 配置，并在 `pytest` 中过滤 `starlette.testclient` 的上游过渡期弃用警告：
+
+```toml
+filterwarnings = [
+  "ignore::starlette.exceptions.StarletteDeprecationWarning",
 ]
 ```
 
@@ -215,26 +253,27 @@ dev = [
 3. 从本技能的 `assets/CLAUDE.md` 和 `assets/AGENTS.md` 生成目标项目根目录的 `CLAUDE.md` 与 `AGENTS.md`。
 4. 从 `assets/templates/config/` 生成 `config.yaml` 与 `config-local.yaml`，只替换项目名、端口和数据库名等占位符。
 5. 从 `assets/templates/docs/` 生成 `docs/` 目录结构和文档规则。
-6. 创建 `pyproject.toml`，写入依赖、`pytest`、`ruff`、`mypy` 配置。
-7. 创建配置文件读取逻辑，使用 `config-local.yaml` 优先、`config.yaml` 兜底。
-8. 从 `assets/templates/app/main.py` 生成应用入口，只替换项目描述占位符。
-9. 创建 `/health` 健康检查。
+6. 从 `assets/templates/pyproject.toml` 生成 `pyproject.toml`，只替换项目名和展示名占位符。
+7. 从 `assets/templates/app/core/config.py` 生成配置读取逻辑，只替换项目展示名和数据库名占位符。
+8. 从 `assets/templates/app/main.py` 和 `assets/templates/app/lifespan.py` 生成应用入口和生命周期管理，只替换项目描述占位符。
+9. 从 `assets/templates/app/api/v1/health_api.py` 和 `assets/templates/app/api/v1/router.py` 生成健康检查和业务路由聚合。
 10. 从 `assets/templates/app/core/exceptions.py` 和 `assets/templates/app/core/exception_handlers.py` 生成业务异常与异常处理器，禁止按描述重新实现。
 11. 从 `assets/templates/app/core/response.py` 和 `assets/templates/app/common/datetime.py` 生成统一响应模块和时间工具，禁止按描述重新实现。
 12. 从 `assets/templates/app/core/logger.py` 生成日志模块，只允许把 `__PROJECT_SLUG__` 替换为目标项目标识。
-13. 从 `assets/templates/app/integration/` 生成外部系统适配层入口和规则文档。
-14. 如需要数据库，创建 `SQLAlchemy` 引擎、会话依赖、模型基类和 `Alembic` 骨架；所有 ORM 字段必须带字段说明。
-15. 如启用 MCP，从 `assets/templates/optional/mcp/` 与 `assets/templates/optional/hooks/` 生成 `.mcp.json`、运行时 hook 和同步守卫脚本；配置缺失时执行“失败分支与兜底”表中的 MCP 分支。
-16. 创建最小集成测试，至少覆盖 `/health`。
-17. 写入 `README.md`，包含安装、配置、启动、迁移和校验命令。
-18. 运行校验命令，修复直到通过。
+13. 从 `assets/templates/app/core/middleware.py` 生成纯 `ASGI` 请求追踪中间件，禁止改写为 `BaseHTTPMiddleware`。
+14. 从 `assets/templates/app/integration/` 生成外部系统适配层入口和规则文档。
+15. 如需要数据库，从 `assets/templates/app/core/database.py`、`assets/templates/app/model/base.py` 和 `assets/templates/migrations/env.py` 生成 `SQLAlchemy` 引擎、会话依赖、模型基类和 `Alembic` 迁移环境；所有 ORM 字段必须带字段说明。
+16. 如启用 MCP，从 `assets/templates/optional/mcp/` 与 `assets/templates/optional/hooks/` 生成 `.mcp.json`、运行时 hook 和同步守卫脚本；配置缺失时执行“失败分支与兜底”表中的 MCP 分支。
+17. 从 `assets/templates/tests/conftest.py` 和 `assets/templates/tests/integration/test_health.py` 生成最小集成测试。
+18. 写入 `README.md`，包含安装、配置、启动、迁移和校验命令。
+19. 运行校验命令，修复直到通过。
 
 ## 失败分支与兜底
 
 | 触发条件 | 一线修复 | 仍失败兜底 |
 | --- | --- | --- |
 | 当前目录已有项目文件 | 先列出现有入口、配置、测试和依赖文件 | 新建前缀目录 `<项目名>/`，不覆盖用户文件 |
-| 本地虚拟环境不存在 | 停止执行 `Python` 命令并提示创建 `.venv`、`venv` 或 `env` | 禁止使用个人机器上的固定解释器路径作为兜底 |
+| 本地虚拟环境不存在 | 停止执行 `Python` 命令并提示创建 `.venv`、`venv` 或 `env` | 禁止写入个人机器上的固定解释器路径 |
 | 固定模板文件缺失 | 用 `rg --files fastapi-project-builder/assets` 定位同名模板 | 停止生成对应文件，记录缺失模板，禁止自由仿写固定模板 |
 | 用户要求轻量项目 | 关闭数据库、模型、仓储、迁移和数据库依赖 | README 写明后续启用数据库所需文件 |
 | 现有业务代码结构混乱 | 先建立 `api/service/schema/integration` 边界，再逐步迁移 | 保留原文件，新增适配层，交付说明列出未迁移项 |
@@ -280,6 +319,8 @@ assets/templates/app/core/response.py -> app/core/response.py
 assets/templates/app/common/datetime.py -> app/common/datetime.py
 ```
 
+健康检查是唯一允许的例外：`GET /health` 面向探针和网关，必须裸返回 `{"status": "ok"}`，不使用 `app.core.response` 包装。
+
 禁止仅根据下列 JSON 结构自由生成实现。允许改动的范围只有项目确有业务需要时追加辅助函数；不得改变已有类名、函数名、字段名、时间格式和递归序列化行为。
 
 成功响应：
@@ -323,12 +364,15 @@ assets/templates/app/common/datetime.py -> app/common/datetime.py
 
 ## 业务异常和入口模板
 
-业务异常、异常处理器和应用入口必须来自固定模板：
+业务异常、异常处理器、应用入口、生命周期、健康检查和路由聚合必须来自固定模板：
 
 ```text
 assets/templates/app/core/exceptions.py -> app/core/exceptions.py
 assets/templates/app/core/exception_handlers.py -> app/core/exception_handlers.py
 assets/templates/app/main.py -> app/main.py
+assets/templates/app/lifespan.py -> app/lifespan.py
+assets/templates/app/api/v1/health_api.py -> app/api/v1/health_api.py
+assets/templates/app/api/v1/router.py -> app/api/v1/router.py
 ```
 
 生成目标项目文件时：
@@ -337,6 +381,9 @@ assets/templates/app/main.py -> app/main.py
 - `app/core/exception_handlers.py` 必须统一捕获业务异常、请求校验异常、标准 HTTP 异常和未捕获异常。
 - `app/main.py` 必须保留 `create_app()` 工厂函数、模块级 `init_log()`、`RequestIDMiddleware`、统一异常处理器注册、健康检查路由和业务路由聚合。
 - `app/main.py` 唯一允许替换 `__PROJECT_DESCRIPTION__`。
+- `app/lifespan.py` 负责启动完成日志和资源释放，不在 `create_app()` 中做资源初始化。
+- `app/api/v1/health_api.py` 固定裸返回 `{"status": "ok"}`。
+- `app/api/v1/router.py` 只聚合业务路由，禁止写业务逻辑。
 
 ## 配置策略
 
@@ -345,6 +392,7 @@ assets/templates/app/main.py -> app/main.py
 ```text
 assets/templates/config/config.yaml -> config/config.yaml
 assets/templates/config/config-local.yaml -> config/config-local.yaml
+assets/templates/app/core/config.py -> app/core/config.py
 ```
 
 模板必须包含 `app`、`database`、`redis`、`log` 4 组配置。禁止默认加入具体业务系统配置，例如第三方平台、内部系统、邮件平台、支付平台等。
@@ -354,11 +402,14 @@ assets/templates/config/config-local.yaml -> config/config-local.yaml
 - `__PROJECT_DISPLAY_NAME__`
 - `__PROJECT_SLUG_UNDERSCORE__`
 
-读取顺序：
+读取顺序固定为：
 
-1. `config/config-local.yaml`
-2. `config/config.yaml`
-3. 测试环境可用环境变量覆盖数据库地址。
+1. `config/config.yaml`
+2. `config/config-local.yaml` 覆盖基础配置
+3. `DATABASE_URL` 最高优先
+4. `DB_HOST`、`DB_PORT`、`DB_USER`、`DB_PASSWORD`、`DB_NAME` 覆盖单项数据库配置
+
+`get_settings()` 必须使用缓存，测试夹具可通过 `get_settings.cache_clear()` 刷新配置。
 
 配置对象至少包含：
 
@@ -425,6 +476,7 @@ assets/templates/docs/reference/ -> docs/reference/
 
 ```text
 assets/templates/app/core/logger.py -> app/core/logger.py
+assets/templates/app/core/middleware.py -> app/core/middleware.py
 ```
 
 生成目标项目文件时，唯一允许替换的是 `__PROJECT_SLUG__`，替换为小写连字符项目标识，例如 `inventory-api`。日志结构必须保留：
@@ -443,17 +495,21 @@ assets/templates/app/core/logger.py -> app/core/logger.py
 - 响应头写入 `x-process-time`。
 - 请求开始、请求完成、异常路径写日志。
 
-优先使用纯 `ASGI` 中间件，避免使用 `BaseHTTPMiddleware` 处理异常传播。
+请求追踪中间件必须使用纯 `ASGI` 模板实现，禁止使用 `BaseHTTPMiddleware` 处理异常传播。
 
 ## 数据库规则
 
 需要数据库时：
 
+- `app/core/database.py`、`app/model/base.py`、`migrations/env.py` 和 `tests/conftest.py` 必须来自固定模板。
 - 使用 `SQLAlchemy 2.0`。
 - 使用 `sessionmaker` 管理每个请求的会话。
 - 使用 `pool_pre_ping=True`。
+- `SessionLocal` 默认使用 `expire_on_commit=False`。
 - 测试夹具必须使用独立连接和事务回滚，保证测试之间数据隔离。
+- 测试夹具必须使用 `join_transaction_mode="create_savepoint"`。
 - 数据库迁移使用 `Alembic`。
+- `migrations/env.py` 必须使用配置中的数据库地址、启用 `compare_type=True`，并从统一模型基类读取 `target_metadata`。
 - 模型集中继承 `app/model/base.py` 中的统一基类。
 - 所有 ORM 模型字段必须有字段说明：
   - `Column` 风格字段必须设置 `comment="中文字段说明"`。
@@ -465,6 +521,23 @@ assets/templates/app/core/logger.py -> app/core/logger.py
 ## 可选 MCP 和接口同步钩子
 
 默认不启用 MCP。只有用户明确选择后才生成 `.mcp.json` 和 hook。
+
+启用 Apifox 或数据库 MCP 时先选择作用域：
+
+- 单项目仓库，且项目根目录等于仓库根目录：默认使用项目级 `.mcp.json`。
+- 多项目仓库，一个仓库包含多个子服务：推荐使用用户级配置，例如 `claude mcp add --scope user`。项目级 `.mcp.json` 只在会话启动时所在目录生效，不递归子目录；跨子服务开发时用户级配置更稳定。
+
+MCP 配置在会话启动时加载。新增服务后必须重启会话；`/mcp` 只能重连或授权已经加载的服务，不能发现新增服务。
+
+用户级配置建议先用 shell 变量组织命令，避免长命令被终端换行切断：
+
+```bash
+APIFOX_TOKEN="替换为 token"
+APIFOX_PROJECT_ID="替换为项目编号"
+claude mcp add apifox --scope user --env APIFOX_TOKEN="$APIFOX_TOKEN" --env APIFOX_PROJECT_ID="$APIFOX_PROJECT_ID" -- npx -y apifox-mcp-server
+```
+
+多项目仓库场景下可不生成项目级 `.mcp.json`，只在 README 写明已改用用户级 MCP 配置。
 
 启用前必须询问以下配置，不得使用现有项目中的真实 token、账号、密码或地址：
 
@@ -520,7 +593,7 @@ tests/unit/
 健康检查测试应验证：
 
 - `GET /health` 返回 `200`。
-- 响应体包含 `{"status": "ok"}`。
+- 响应体严格等于 `{"status": "ok"}`，无 `code/data/message` 包装。
 
 数据库启用时，`tests/conftest.py` 必须提供独立应用实例、独立数据库连接和事务回滚夹具；`tests/unit/test_migration_schema_alignment.py` 必须验证核心模型字段、迁移脚本字段和字段说明保持一致。
 
@@ -557,7 +630,7 @@ $PY -m pip install -e ".[dev]"
 - 禁止读取或复制任何本地业务项目作为模板来源；只能使用本技能目录内的 `assets/`。
 - 禁止引入第三方平台、内部系统、支付、订单、文件处理、报表、权限等模板业务概念，除非用户明确要求。
 - 禁止把任何现有项目 `.mcp.json` 中的真实 token、项目编号、数据库账号、密码或地址复制到新项目。
-- 禁止自由生成 `app/main.py`、`app/core/logger.py`、`app/core/response.py`、`app/core/exceptions.py`、`app/core/exception_handlers.py`、`app/common/datetime.py`、`config/config.yaml`、`config/config-local.yaml` 和 `docs/README.md`；必须使用本技能固定模板。
+- 禁止自由生成固定模板文件集合中的任何文件；必须使用本技能固定模板，只替换明确允许的占位符。
 - 禁止创建没有字段说明的 ORM 模型字段。
 - 禁止接口变更后跳过 Apifox MCP 同步。
 - 禁止把路由写成业务逻辑集中地。

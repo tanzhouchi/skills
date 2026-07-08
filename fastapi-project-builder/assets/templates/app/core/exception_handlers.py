@@ -47,7 +47,10 @@ def configure_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(RequestValidationError)
-    async def _handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+    async def _handle_validation_error(
+        request: Request,
+        exc: RequestValidationError,
+    ) -> JSONResponse:
         """处理 FastAPI/Pydantic 请求参数校验失败（422）。"""
         _logger.warning("参数校验失败: %s %s -> %s",
                         request.method, request.url, exc.errors())

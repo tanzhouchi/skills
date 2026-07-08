@@ -4,13 +4,13 @@
 所有 API 响应都通过此模块的辅助函数构建，确保格式一致。
 
 成功响应：{"code": 200, "data": ..., "message": "请求成功", "timestamp": "..."}
-分页响应：{"code": 200, "data": {"total": N, "page": N, "page_size": N, "total_pages": N, "items": [...]}, ...}
+分页响应：{"code": 200, "data": {"total": N, "page": N, "items": [...]}, ...}
 错误响应：{"code": 400, "data": null, "message": "错误消息", "timestamp": "..."}
 """
 
 from collections.abc import Mapping
 from datetime import datetime
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -24,7 +24,7 @@ class SuccessResponse(BaseModel, Generic[T]):
 
     code: int = Field(200, description="HTTP 状态码")
     data: T = Field(..., description="响应数据")
-    message: Optional[str] = Field(None, description="提示消息")
+    message: str | None = Field(None, description="提示消息")
     timestamp: str = Field(default_factory=local_now_str, description="响应时间戳")
 
 
@@ -43,7 +43,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
     code: int = Field(200, description="HTTP 状态码")
     data: PaginatedData[T] = Field(..., description="分页数据")
-    message: Optional[str] = Field(None, description="提示消息")
+    message: str | None = Field(None, description="提示消息")
     timestamp: str = Field(default_factory=local_now_str, description="响应时间戳")
 
 
@@ -51,7 +51,7 @@ class ErrorResponse(BaseModel):
     """统一错误响应模型。"""
 
     code: int = Field(..., description="HTTP 状态码")
-    data: Optional[Any] = Field(None, description="错误详情数据")
+    data: Any | None = Field(None, description="错误详情数据")
     message: str = Field(..., description="错误消息")
     timestamp: str = Field(default_factory=local_now_str, description="响应时间戳")
 
@@ -130,7 +130,10 @@ def deleted_response(message: str = "删除成功") -> SuccessResponse:
 
 # ---- OpenAPI 响应示例辅助工具 ----
 
-def _make_success_example(data_example: dict[str, Any], message: str = "请求成功") -> dict[str, Any]:
+def _make_success_example(
+    data_example: dict[str, Any],
+    message: str = "请求成功",
+) -> dict[str, Any]:
     """内部：按统一成功响应格式包装 data 示例值。"""
     return {
         "code": 200,

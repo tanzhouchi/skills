@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -lc 'if [ -x .venv/bin/python ]; then PY=.venv/bin/python; elif [ -x venv/bin/python ]; then PY=venv/bin/python; elif [ -x env/bin/python ]; then PY=env/bin/python; else echo \"未找到项目本地虚拟环境，请先创建 .venv、venv 或 env\" >&2; exit 1; fi; \"$PY\" scripts/hooks/apifox_sync_guard.py'"
+            "command": "bash -lc 'd=\"$(pwd)\"; while [ \"$d\" != \"/\" ]; do if [ -z \"${ROOT:-}\" ] && [ -f \"$d/scripts/hooks/apifox_sync_guard.py\" ]; then ROOT=\"$d\"; fi; if [ -z \"${PY:-}\" ]; then for v in .venv venv env; do if [ -x \"$d/$v/bin/python\" ]; then PY=\"$d/$v/bin/python\"; break; fi; done; fi; if [ -n \"${ROOT:-}\" ] && [ -n \"${PY:-}\" ]; then break; fi; d=\"$(dirname \"$d\")\"; done; if [ -z \"${PY:-}\" ]; then echo \"未找到项目本地虚拟环境，请先创建 .venv、venv 或 env\" >&2; exit 1; fi; if [ -z \"${ROOT:-}\" ]; then echo \"未找到 Apifox 同步守卫脚本，请确认 scripts/hooks/apifox_sync_guard.py 存在\" >&2; exit 1; fi; cd \"$ROOT\" && \"$PY\" scripts/hooks/apifox_sync_guard.py'"
           }
         ]
       }
