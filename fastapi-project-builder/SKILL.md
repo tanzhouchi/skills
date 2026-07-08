@@ -47,7 +47,7 @@ pwd
 find . -maxdepth 2 -type d \( -name ".venv" -o -name "venv" -o -name "env" \)
 ```
 
-如果当前目录有 `.venv`、`venv` 或 `env`，后续 `Python` 命令优先使用其中的解释器。若不存在，默认使用 `/Users/tansir/.venv`。
+如果当前目录有 `.venv`、`venv` 或 `env`，后续 `Python` 命令优先使用其中的解释器。若不存在，停止执行 `Python` 命令并提示先创建项目本地虚拟环境，禁止使用个人机器上的固定解释器路径作为兜底。
 
 解释器解析顺序：
 
@@ -59,7 +59,8 @@ elif [ -x venv/bin/python ]; then
 elif [ -x env/bin/python ]; then
   PY=env/bin/python
 else
-  PY=/Users/tansir/.venv/bin/python
+  echo "未找到项目本地虚拟环境，请先创建 .venv、venv 或 env" >&2
+  exit 1
 fi
 ```
 
@@ -233,7 +234,7 @@ dev = [
 | 触发条件 | 一线修复 | 仍失败兜底 |
 | --- | --- | --- |
 | 当前目录已有项目文件 | 先列出现有入口、配置、测试和依赖文件 | 新建前缀目录 `<项目名>/`，不覆盖用户文件 |
-| 本地虚拟环境不存在 | 使用 `/Users/tansir/.venv/bin/python` | 若该解释器也不存在，停止执行 Python 命令并汇报缺失路径 |
+| 本地虚拟环境不存在 | 停止执行 `Python` 命令并提示创建 `.venv`、`venv` 或 `env` | 禁止使用个人机器上的固定解释器路径作为兜底 |
 | 固定模板文件缺失 | 用 `rg --files fastapi-project-builder/assets` 定位同名模板 | 停止生成对应文件，记录缺失模板，禁止自由仿写固定模板 |
 | 用户要求轻量项目 | 关闭数据库、模型、仓储、迁移和数据库依赖 | README 写明后续启用数据库所需文件 |
 | 现有业务代码结构混乱 | 先建立 `api/service/schema/integration` 边界，再逐步迁移 | 保留原文件，新增适配层，交付说明列出未迁移项 |

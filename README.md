@@ -73,8 +73,4 @@ git status --short
 git check-ignore -v path/to/file
 ```
 
-如果涉及 `Python` 脚本，先按仓库规则检测本地虚拟环境；当前目录无 `.venv`、`venv`、`env` 时，使用：
-
-```bash
-/Users/tansir/.venv/bin/python
-```
+如果涉及 `Python` 脚本，先按仓库规则检测本地虚拟环境；当前目录无 `.venv`、`venv`、`env` 时，停止执行并先创建项目本地虚拟环境，禁止使用个人机器上的固定解释器路径作为兜底。
